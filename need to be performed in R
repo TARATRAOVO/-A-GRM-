@@ -1,0 +1,70 @@
+remakeP=function(A,GRM,PED){
+  ids<-getids(A,GRM)
+  Aa<-arrangeA(A,GRM,ids)
+  Ga<-arrangeG(A,GRM,ids)
+  idx=vector()
+  judgelist=vector()
+  for(i in 1:length(ids)){
+    ig<-getig(i,Ga,ids)
+    ia<-getia(i,Aa,ids)
+    list<-getlist(ia,ig)
+    judgelist<-c(judgelist,judge(list))
+    idx<-c(idx,ids[i][judge(list)])
+  }
+  ped<-remakeped(PED,idx)
+  return(ped)
+  #return(judgelist)
+  #return(idx)
+}
+getids=function(A,GRM){
+  a<-unique(as.numeric(rownames(A)))
+  g<-unique(GRM[,1])
+  ids<-a[a%in%g]
+  return(ids)
+}
+arrangeA=function(A,GRM,ids){
+  Aa<-A[rownames(A)%in%ids,colnames(A)%in%ids]
+  return(Aa)
+}
+arrangeG=function(A,GRM,ids){
+  Ga<-GRM[GRM[,1]%in%ids,]
+  Ga[,3]<-sqrt(Ga[,3]^2)
+  return(Ga)
+}
+getia=function(i,Aa,ids){
+  q<-as.numeric(Aa[as.numeric(rownames(Aa))==ids[i],])
+  w<-rep(ids[i],length(rownames(Aa)))
+  e<-as.numeric(rownames(Aa))
+  r<-cbind(w,e,q,row.names = NULL)
+  return(r)
+}
+getig=function(i,Ga,ids){
+  z<-Ga[Ga[,1]==ids[i],]
+  x<-Ga[Ga[,2]==ids[i],]
+  v<-c(z[,1],x[,2])
+  b<-c(z[,2],x[,1])
+  n<-c(z[,3],x[,3])
+  m<-data.frame(v,b,n,row.names = NULL)
+  m<-m[order(m[,2]),]
+  m<-m[!duplicated(m[,2]),]
+  rownames(m)<-NULL
+  return(m)
+}
+getlist=function(ia,ig){
+  id<-ia[,2][ia[,2]%in%ig[,2]]
+  a<-data.frame(ia[,3][ia[,2]%in%id],ig[,3][ig[,2]%in%id],row.names=NULL)
+  return(a)
+}
+judge=function(list){
+  if(length(list[,1])<=5)
+    return(FALSE) else
+    result<-cor.test(list[,1],list[,2])
+    j<-(result$p.value<0.05)
+    return(j)
+}
+remakeped=function(PED,idx){
+  PED[,1][!(PED[,1]%in%idx)]<-0
+  PED[,2][!(PED[,2]%in%idx)]<-0
+  pedx<-PED[PED[,1]!=0|PED[,2]!=0,]
+  return(pedx)
+}
